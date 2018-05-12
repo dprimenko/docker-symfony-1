@@ -1,38 +1,50 @@
 version: '2'
-
 services:
     db:
-        image: mysql
+        image: 'mysql:5.7'
         volumes:
-            - "./.data/db:/var/lib/mysql"
+            - './.data/db:/var/lib/mysql'
         environment:
-            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-            MYSQL_DATABASE: ${MYSQL_DATABASE}
-            MYSQL_USER: ${MYSQL_USER}
-            MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+            MYSQL_ROOT_PASSWORD: '${MYSQL_ROOT_PASSWORD}'
+            MYSQL_DATABASE: '${MYSQL_DATABASE}'
+            MYSQL_USER: '${MYSQL_USER}'
+            MYSQL_PASSWORD: '${MYSQL_PASSWORD}'
+            MYSQL_VERSION: '${MYSQL_VERSION}'
     php:
         build:
             context: php7-fpm
-            args:
-                TIMEZONE: ${TIMEZONE}
+            args: {TIMEZONE: '${TIMEZONE}'}
         volumes:
-            - ${SYMFONY_APP_PATH}:/var/www/symfony
-            - ./logs/symfony:/var/www/symfony/app/logs
+            - '${SYMFONY_APP_PATH}:/var/www/symfony'
+            - './logs/symfony:/var/www/symfony/app/logs'
+        depends_on:
+            - db
     nginx:
         build: nginx
         ports:
-            - 80:80
+            - '80:80'
         volumes_from:
             - php
         volumes:
-            - ./logs/nginx/:/var/log/nginx
+            - './logs/nginx/:/var/log/nginx'
     elk:
         image: willdurand/elk
         ports:
-            - 81:80
+            - '81:80'
         volumes:
-            - ./elk/logstash:/etc/logstash
-            - ./elk/logstash/patterns:/opt/logstash/patterns
+            - './elk/logstash:/etc/logstash'
+            - './elk/logstash/patterns:/opt/logstash/patterns'
         volumes_from:
             - php
             - nginx
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        ports:
+            - '8080:80'
+        depends_on:
+            - db
+    redis:
+        image: 'redis:alpine'
+        ports:
+            - '6379:6379'
+
